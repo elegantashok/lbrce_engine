@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Engine Health Monitor</title>
+
+<!-- Mobile-first viewport -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(180deg, #020617, #020617);
+    color: #e5e7eb;
+    display: flex;
+    justify-content: center;
+  }
+
+  .phone {
+    width: 100%;
+    max-width: 420px;     /* 9:16 phone width */
+    height: 100vh;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    color: #38bdf8;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: #020617;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 0 18px rgba(56,189,248,0.15);
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #1e293b;
+  }
+
+  .row:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    font-size: 14px;
+    color: #94a3b8;
+  }
+
+  .value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f8fafc;
+  }
+
+  .status {
+    text-align: center;
+    padding: 16px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 12px;
+  }
+
+  .ok {
+    background: rgba(34,197,94,0.15);
+    color: #22c55e;
+  }
+
+  .fault {
+    background: rgba(239,68,68,0.15);
+    color: #ef4444;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 10px;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="phone">
+
+  <h1>ENGINE HEALTH MONITOR</h1>
+
+  <div class="card">
+    <div class="row">
+      <div class="label">Vibration Frequency</div>
+      <div class="value" id="vibFreq">-- Hz</div>
+    </div>
+    <div class="row">
+      <div class="label">Acoustic dB</div>
+      <div class="value" id="acDb">-- dB</div>
+    </div>
+    <div class="row">
+      <div class="label">Acoustic Frequency</div>
+      <div class="value" id="acFreq">-- Hz</div>
+    </div>
+    <div class="row">
+      <div class="label">Frequency Band Energy</div>
+      <div class="value" id="bandEnergy">--</div>
+    </div>
+    <div class="row">
+      <div class="label">Amplitude Mean</div>
+      <div class="value" id="ampMean">--</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="engineStatus" class="status ok">WAITING FOR DATA</div>
+  </div>
+
+  <footer>
+    Real-time IoT Monitoring • Firebase
+  </footer>
+
+</div>
+
+<script>
+  // 🔹 Firebase config (frontend-safe)
+  const firebaseConfig = {
+    databaseURL: "https://arcontrol-fcc95-default-rtdb.firebaseio.com/"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const ref = db.ref("engine_vibration");
+
+  ref.on("value", snapshot => {
+    const data = snapshot.val();
+    if (!data) return;
+
+    const keys = Object.keys(data);
+    const latestKey = keys[keys.length - 1];
+    const d = data[latestKey];
+
+    const ax = d.ax_rms;
+    const ay = d.ay_rms;
+    const az = d.az_rms;
+    const resultant = d.resultant_rms;
+    const shock = d.shock_count;
+
+    // 📐 Derived calculations
+    const vibFreq = (resultant * 1500).toFixed(1);
+    const acDb = (20 * Math.log10(resultant + 0.001)).toFixed(1);
+    const acFreq = (vibFreq * 2.5).toFixed(1);
+    const bandEnergy = (resultant * resultant).toFixed(3);
+    const ampMean = ((ax + ay + az) / 3).toFixed(3);
+
+    // Update UI
+    document.getElementById("vibFreq").innerText = vibFreq + " Hz";
+    document.getElementById("acDb").innerText = acDb + " dB";
+    document.getElementById("acFreq").innerText = acFreq + " Hz";
+    document.getElementById("bandEnergy").innerText = bandEnergy;
+    document.getElementById("ampMean").innerText = ampMean;
+
+    // Engine status logic
+    const status = document.getElementById("engineStatus");
+    if (resultant > 1.2 || shock > 2) {
+      status.innerText = "FAULT DETECTED";
+      status.className = "status fault";
+    } else {
+      status.innerText = "ENGINE HEALTHY";
+      status.className = "status ok";
+    }
+  });
+</script>
+
+</body>
+</html>
