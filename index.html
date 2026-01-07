@@ -1,162 +1,139 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Engine Health Monitor</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <title>Engine Health Monitor</title>
 
-<style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #020617;
-    color: #e5e7eb;
-    display: flex;
-    justify-content: center;
-  }
-  .phone {
-    max-width: 420px;
-    width: 100%;
-    height: 100vh;
-    padding: 16px;
-  }
-  h1 {
-    text-align: center;
-    color: #38bdf8;
-    font-size: 22px;
-    margin-bottom: 14px;
-  }
-  .card {
-    background: #020617;
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 12px;
-    box-shadow: 0 0 15px rgba(56,189,248,0.15);
-  }
-  .card-title {
-    font-size: 14px;
-    color: #94a3b8;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-  }
-  .row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #1e293b;
-  }
-  .row:last-child { border-bottom: none; }
-  .label { font-size: 14px; color: #94a3b8; }
-  .value { font-size: 16px; font-weight: bold; }
-  .status {
-    text-align: center;
-    font-size: 20px;
-    padding: 14px;
-    border-radius: 12px;
-    font-weight: bold;
-  }
-  .ok { background: rgba(34,197,94,0.15); color: #22c55e; }
-  .fault { background: rgba(239,68,68,0.15); color: #ef4444; }
-</style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 
-<body>
-<div class="phone">
+<body style="
+  margin:0;
+  background:#0e1621;
+  font-family:Arial, sans-serif;
+  display:flex;
+  justify-content:center;
+">
 
-<h1>ENGINE HEALTH MONITOR</h1>
+<div style="
+  width:360px;
+  min-height:640px;
+  background:#111;
+  color:#fff;
+  padding:15px;
+  box-sizing:border-box;
+">
 
-<!-- 🔴 RAW SENSOR DATA -->
-<div class="card">
-  <div class="card-title">Live Sensor Data</div>
-  <div class="row"><div class="label">AX RMS</div><div class="value" id="ax">--</div></div>
-  <div class="row"><div class="label">AY RMS</div><div class="value" id="ay">--</div></div>
-  <div class="row"><div class="label">AZ RMS</div><div class="value" id="az">--</div></div>
-  <div class="row"><div class="label">Resultant RMS</div><div class="value" id="res">--</div></div>
-  <div class="row"><div class="label">Shock Count</div><div class="value" id="shock">--</div></div>
-</div>
+  <!-- LOGO -->
+  <div style="text-align:center;margin-bottom:10px;">
+    <img src="https://www.lbrce.ac.in/images/logo.png"
+         style="width:220px;max-width:90%;">
+  </div>
 
-<!-- 🔵 CALCULATED VALUES -->
-<div class="card">
-  <div class="card-title">Calculated Parameters</div>
-  <div class="row"><div class="label">Vibration Frequency</div><div class="value" id="vibFreq">-- Hz</div></div>
-  <div class="row"><div class="label">Acoustic dB</div><div class="value" id="acDb">-- dB</div></div>
-  <div class="row"><div class="label">Acoustic Frequency</div><div class="value" id="acFreq">-- Hz</div></div>
-  <div class="row"><div class="label">Frequency Band Energy</div><div class="value" id="energy">--</div></div>
-  <div class="row"><div class="label">Amplitude Mean</div><div class="value" id="amp">--</div></div>
-</div>
+  <h2 style="text-align:center;margin:5px 0 15px 0;">
+    ENGINE HEALTH MONITOR
+  </h2>
 
-<!-- 🚦 ENGINE STATUS -->
-<div class="card">
-  <div id="status" class="status ok">WAITING FOR DATA</div>
-</div>
+  <!-- LIVE DATA -->
+  <div style="background:#1b2635;padding:10px;border-radius:8px;margin-bottom:10px;">
+    <h3>Live Sensor Data</h3>
+    <p>AX RMS: <span id="ax">--</span></p>
+    <p>AY RMS: <span id="ay">--</span></p>
+    <p>AZ RMS: <span id="az">--</span></p>
+    <p>Resultant RMS: <span id="res">--</span></p>
+    <p>Shock Count: <span id="shock">--</span></p>
+  </div>
 
+  <!-- CALCULATED VALUES -->
+  <div style="background:#16202f;padding:10px;border-radius:8px;margin-bottom:10px;">
+    <h3>Calculated Parameters</h3>
+    <p>Vibration Frequency: <span id="vfreq">--</span> Hz</p>
+    <p>Acoustic dB: <span id="adb">--</span> dB</p>
+    <p>Acoustic Frequency: <span id="afreq">--</span> Hz</p>
+    <p>Frequency Band Energy: <span id="fbe">--</span></p>
+    <p>Amplitude Mean: <span id="amean">--</span></p>
+  </div>
+
+  <!-- ENGINE STATUS -->
+  <div style="
+    background:#0f5132;
+    padding:12px;
+    border-radius:8px;
+    text-align:center;
+    font-size:18px;
+  ">
+    ENGINE STATUS: <span id="status">--</span>
+  </div>
+ <footer>
+    Real-time IoT Monitoring • PUJITH & TEAM LBRCE
+  </footer>
 </div>
 
 <script>
-  const firebaseConfig = {
-    databaseURL: "https://arcontrol-fcc95-default-rtdb.firebaseio.com/"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const ref = firebase.database().ref("engine_vibration");
+/* ================== FIREBASE CONFIG ================== */
+/* 🔴 REPLACE WITH YOUR OWN VALUES */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com"
+};
+/* ===================================================== */
 
-  ref.on("value", snap => {
-    const data = snap.val();
-    if (!data) return;
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    const keys = Object.keys(data);
-    const latest = data[keys[keys.length - 1]];
+/* 🔴 CHANGE PATH IF NEEDED */
+const dataRef = db.ref("engine_vibration");
 
-    const ax = latest.ax_rms;
-    const ay = latest.ay_rms;
-    const az = latest.az_rms;
-    const res = latest.resultant_rms;
-    const shock = latest.shock_count;
+dataRef.limitToLast(1).on("value", snapshot => {
+  snapshot.forEach(child => {
+    const d = child.val();
 
-    // Display RAW
-    axEl.innerText = ax.toFixed(3);
-    ayEl.innerText = ay.toFixed(3);
-    azEl.innerText = az.toFixed(3);
-    resEl.innerText = res.toFixed(3);
-    shockEl.innerText = shock;
+    const ax = d.ax_rms || 0;
+    const ay = d.ay_rms || 0;
+    const az = d.az_rms || 0;
+    const res = d.resultant_rms || 0;
+    const shock = d.shock_count || 0;
 
-    // Calculations
-    const vibFreq = res * 1500;
-    const acDb = 20 * Math.log10(res + 0.001);
-    const acFreq = vibFreq * 2.5;
-    const energy = res * res;
-    const amp = (ax + ay + az) / 3;
+    document.getElementById("ax").innerText = ax.toFixed(2);
+    document.getElementById("ay").innerText = ay.toFixed(2);
+    document.getElementById("az").innerText = az.toFixed(2);
+    document.getElementById("res").innerText = res.toFixed(2);
+    document.getElementById("shock").innerText = shock;
 
-    vibFreqEl.innerText = vibFreq.toFixed(1) + " Hz";
-    acDbEl.innerText = acDb.toFixed(1) + " dB";
-    acFreqEl.innerText = acFreq.toFixed(1) + " Hz";
-    energyEl.innerText = energy.toFixed(3);
-    ampEl.innerText = amp.toFixed(3);
+    /* ===== CALCULATIONS ===== */
+    const vibrationFreq = res * 18;
+    const acousticDb = 20 * Math.log10(res + 0.01);
+    const acousticFreq = vibrationFreq * 1.2;
+    const bandEnergy = res * res;
+    const ampMean = (ax + ay + az) / 3;
 
-    const status = document.getElementById("status");
-    if (res > 1.2 || shock > 2) {
-      status.innerText = "FAULT DETECTED";
-      status.className = "status fault";
-    } else {
-      status.innerText = "ENGINE HEALTHY";
-      status.className = "status ok";
+    document.getElementById("vfreq").innerText = vibrationFreq.toFixed(1);
+    document.getElementById("adb").innerText = acousticDb.toFixed(1);
+    document.getElementById("afreq").innerText = acousticFreq.toFixed(1);
+    document.getElementById("fbe").innerText = bandEnergy.toFixed(2);
+    document.getElementById("amean").innerText = ampMean.toFixed(2);
+
+    /* ===== ENGINE STATUS LOGIC ===== */
+    let status = "NORMAL";
+    let color = "#0f5132";
+
+    if (res > 1.5 || shock > 5) {
+      status = "FAULTY";
+      color = "#842029";
+    } else if (res > 1.0) {
+      status = "WARNING";
+      color = "#664d03";
     }
+
+    const statusBox = document.getElementById("status");
+    statusBox.innerText = status;
+    statusBox.parentElement.style.background = color;
   });
-
-  const axEl = document.getElementById("ax");
-  const ayEl = document.getElementById("ay");
-  const azEl = document.getElementById("az");
-  const resEl = document.getElementById("res");
-  const shockEl = document.getElementById("shock");
-
-  const vibFreqEl = document.getElementById("vibFreq");
-  const acDbEl = document.getElementById("acDb");
-  const acFreqEl = document.getElementById("acFreq");
-  const energyEl = document.getElementById("energy");
-  const ampEl = document.getElementById("amp");
+});
 </script>
 
 </body>
